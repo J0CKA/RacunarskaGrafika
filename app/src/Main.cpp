@@ -4,6 +4,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <vector>
+#include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <../libs/stb/include/stb_image.h>
@@ -103,6 +105,7 @@ int main() {
     // Učitavanje tekstura
     unsigned int floorTexture = loadTexture("resources/textures/tiles.jpg");
     unsigned int wallTexture = loadTexture("resources/textures/zidovi.jpg");
+    unsigned int podiumTexture = loadTexture("resources/textures/podium1.jpg");
 
     // Pod
     float floorVertices[] = {
@@ -147,6 +150,53 @@ int main() {
          10.0f, -0.5f,  10.0f,   0.0f, 0.0f,
          10.0f, -0.5f, -10.0f,   4.0f, 0.0f
     };
+
+    // Generisanje pravog 3D cilindra (podijuma) sa gornjom pločom i bočnim stranicama
+    const int segments = 32;
+    float podiumRadius = 2.8f;
+    float podiumHeight = 0.25f;
+    float baseY = -0.5f;
+    float topY = baseY + podiumHeight;
+
+    std::vector<float> podiumVertices;
+    for (int i = 0; i < segments; ++i) {
+        float angle1 = i * 2.0f * 3.14159265359f / segments;
+        float angle2 = (i + 1) * 2.0f * 3.14159265359f / segments;
+
+        float x1 = podiumRadius * cos(angle1);
+        float z1 = podiumRadius * sin(angle1);
+        float x2 = podiumRadius * cos(angle2);
+        float z2 = podiumRadius * sin(angle2);
+
+        // 1. Gornja ploča podijuma (trougao ka centru)
+        podiumVertices.push_back(0.0f); podiumVertices.push_back(topY); podiumVertices.push_back(0.0f);
+        podiumVertices.push_back(0.5f); podiumVertices.push_back(0.5f);
+
+        podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
+        podiumVertices.push_back((x1 / podiumRadius + 1.0f) * 0.5f); podiumVertices.push_back((z1 / podiumRadius + 1.0f) * 0.5f);
+
+        podiumVertices.push_back(x2); podiumVertices.push_back(topY); podiumVertices.push_back(z2);
+        podiumVertices.push_back((x2 / podiumRadius + 1.0f) * 0.5f); podiumVertices.push_back((z2 / podiumRadius + 1.0f) * 0.5f);
+
+        // 2. Bočni omotač (dva trougla za visinu cilindra)
+        podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
+        podiumVertices.push_back(0.0f); podiumVertices.push_back(1.0f);
+
+        podiumVertices.push_back(x1); podiumVertices.push_back(baseY); podiumVertices.push_back(z1);
+        podiumVertices.push_back(0.0f); podiumVertices.push_back(0.0f);
+
+        podiumVertices.push_back(x2); podiumVertices.push_back(baseY); podiumVertices.push_back(z2);
+        podiumVertices.push_back(1.0f); podiumVertices.push_back(0.0f);
+
+        podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
+        podiumVertices.push_back(0.0f); podiumVertices.push_back(1.0f);
+
+        podiumVertices.push_back(x2); podiumVertices.push_back(baseY); podiumVertices.push_back(z2);
+        podiumVertices.push_back(1.0f); podiumVertices.push_back(0.0f);
+
+        podiumVertices.push_back(x2); podiumVertices.push_back(topY); podiumVertices.push_back(z2);
+        podiumVertices.push_back(1.0f); podiumVertices.push_back(1.0f);
+    }
 
     // VAO i VBO za pod
     unsigned int floorVAO, floorVBO;
@@ -196,6 +246,18 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    // VAO i VBO za podijum
+    unsigned int podiumVAO, podiumVBO;
+    glGenVertexArrays(1, &podiumVAO);
+    glGenBuffers(1, &podiumVBO);
+    glBindVertexArray(podiumVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, podiumVBO);
+    glBufferData(GL_ARRAY_BUFFER, podiumVertices.size() * sizeof(float), podiumVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
     while (!glfwWindowShouldClose(window)) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
@@ -205,35 +267,65 @@ int main() {
 
         glUseProgram(shaderProgram);
 
-        glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 2.0f, 10.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)1280 / (float)720, 0.1f, 100.0f);
 
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
 
         // 1. Iscrtavanje poda
+        glm::mat4 model = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, floorTexture);
         glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0);
         glBindVertexArray(floorVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // 2. Iscrtavanje zidova sa teksturom zidova
+        // 2. Iscrtavanje zidova
         glBindTexture(GL_TEXTURE_2D, wallTexture);
 
-        // Zadnji zid
         glBindVertexArray(backWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // Levi zid
         glBindVertexArray(leftWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // Desni zid
         glBindVertexArray(rightWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        // 3. Iscrtavanje 5 podijuma za automobile sa novom podijum tekstukrom i razmakom
+        glBindTexture(GL_TEXTURE_2D, podiumTexture);
+        glBindVertexArray(podiumVAO);
+
+        // Centralni podijum
+        model = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+
+        // Levi prednji podijum
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-6.0f, 0.0f, 2.5f));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+
+        // Levi zadnji podijum
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(-6.0f, 0.0f, -4.5f));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+
+        // Desni prednji podijum
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(6.0f, 0.0f, 2.5f));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+
+        // Desni zadnji podijum
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(6.0f, 0.0f, -4.5f));
+        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -247,6 +339,8 @@ int main() {
     glDeleteBuffers(1, &leftWallVBO);
     glDeleteVertexArrays(1, &rightWallVAO);
     glDeleteBuffers(1, &rightWallVBO);
+    glDeleteVertexArrays(1, &podiumVAO);
+    glDeleteBuffers(1, &podiumVBO);
     glDeleteProgram(shaderProgram);
 
     glfwTerminate();
