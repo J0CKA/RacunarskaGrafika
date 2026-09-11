@@ -22,7 +22,7 @@ const char* vertexShaderSource = "#version 330 core\n"
 "   TexCoord = aTexCoord;\n"
 "}\0";
 
-const char* fragmentShaderSource = "#version 330 core\n"
+const char* fixedFragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
 "in vec2 TexCoord;\n"
 "uniform sampler2D texture1;\n"
@@ -50,9 +50,8 @@ unsigned int loadTexture(char const *path) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
-        std::cout << "Uspesno ucitana tekstura: " << path << std::endl;
     } else {
-        std::cout << "Greska pri ucitavanju teksture na putanji: " << path << std::endl;
+        std::cout << "Greska pri ucitavanju teksture: " << path << std::endl;
         stbi_image_free(data);
     }
 
@@ -63,6 +62,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
+void drawCube(unsigned int shaderProgram, unsigned int cubeVAO, glm::mat4 model) {
+    glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+    glBindVertexArray(cubeVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
 int main() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -71,7 +76,6 @@ int main() {
 
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Car Showroom - Salon Automobila", NULL, NULL);
     if (window == NULL) {
-        std::cout << "Greska pri kreiranju GLFW prozora!" << std::endl;
         glfwTerminate();
         return -1;
     }
@@ -79,19 +83,17 @@ int main() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        std::cout << "Greska pri inicijalizaciji GLAD-a!" << std::endl;
         return -1;
     }
 
     glEnable(GL_DEPTH_TEST);
 
-    // Kompajliranje šejdera
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
 
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glShaderSource(fragmentShader, 1, &fixedFragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
 
     unsigned int shaderProgram = glCreateProgram();
@@ -102,12 +104,10 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    // Učitavanje tekstura
     unsigned int floorTexture = loadTexture("resources/textures/tiles.jpg");
     unsigned int wallTexture = loadTexture("resources/textures/zidovi.jpg");
     unsigned int podiumTexture = loadTexture("resources/textures/podium1.jpg");
 
-    // Pod
     float floorVertices[] = {
          10.0f, -0.5f,  10.0f,   10.0f,  0.0f,
         -10.0f, -0.5f,  10.0f,    0.0f,  0.0f,
@@ -118,7 +118,6 @@ int main() {
          10.0f, -0.5f, -10.0f,   10.0f, 10.0f
     };
 
-    // Zadnji zid (z = -10.0f)
     float backWallVertices[] = {
          10.0f,  5.0f, -10.0f,   4.0f, 2.0f,
         -10.0f,  5.0f, -10.0f,   0.0f, 2.0f,
@@ -129,7 +128,6 @@ int main() {
          10.0f, -0.5f, -10.0f,   4.0f, 0.0f
     };
 
-    // Levi zid (x = -10.0f)
     float leftWallVertices[] = {
         -10.0f,  5.0f,  10.0f,   4.0f, 2.0f,
         -10.0f,  5.0f, -10.0f,   0.0f, 2.0f,
@@ -140,7 +138,6 @@ int main() {
         -10.0f, -0.5f,  10.0f,   4.0f, 0.0f
     };
 
-    // Desni zid (x = 10.0f)
     float rightWallVertices[] = {
          10.0f,  5.0f, -10.0f,   4.0f, 2.0f,
          10.0f,  5.0f,  10.0f,   0.0f, 2.0f,
@@ -151,7 +148,50 @@ int main() {
          10.0f, -0.5f, -10.0f,   4.0f, 0.0f
     };
 
-    // Generisanje pravog 3D cilindra (podijuma) sa gornjom pločom i bočnim stranicama
+    float cubeVertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+
     const int segments = 32;
     float podiumRadius = 2.8f;
     float podiumHeight = 0.25f;
@@ -163,42 +203,42 @@ int main() {
         float angle1 = i * 2.0f * 3.14159265359f / segments;
         float angle2 = (i + 1) * 2.0f * 3.14159265359f / segments;
 
+        float u1 = (float)i / segments;
+        float u2 = (float)(i + 1) / segments;
+
         float x1 = podiumRadius * cos(angle1);
         float z1 = podiumRadius * sin(angle1);
         float x2 = podiumRadius * cos(angle2);
         float z2 = podiumRadius * sin(angle2);
 
-        // 1. Gornja ploča podijuma (trougao ka centru)
         podiumVertices.push_back(0.0f); podiumVertices.push_back(topY); podiumVertices.push_back(0.0f);
         podiumVertices.push_back(0.5f); podiumVertices.push_back(0.5f);
 
         podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
-        podiumVertices.push_back((x1 / podiumRadius + 1.0f) * 0.5f); podiumVertices.push_back((z1 / podiumRadius + 1.0f) * 0.5f);
+        podiumVertices.push_back(0.5f + 0.5f * (x1 / podiumRadius)); podiumVertices.push_back(0.5f + 0.5f * (z1 / podiumRadius));
 
         podiumVertices.push_back(x2); podiumVertices.push_back(topY); podiumVertices.push_back(z2);
-        podiumVertices.push_back((x2 / podiumRadius + 1.0f) * 0.5f); podiumVertices.push_back((z2 / podiumRadius + 1.0f) * 0.5f);
+        podiumVertices.push_back(0.5f + 0.5f * (x2 / podiumRadius)); podiumVertices.push_back(0.5f + 0.5f * (z2 / podiumRadius));
 
-        // 2. Bočni omotač (dva trougla za visinu cilindra)
         podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
-        podiumVertices.push_back(0.0f); podiumVertices.push_back(1.0f);
+        podiumVertices.push_back(u1); podiumVertices.push_back(1.0f);
 
         podiumVertices.push_back(x1); podiumVertices.push_back(baseY); podiumVertices.push_back(z1);
-        podiumVertices.push_back(0.0f); podiumVertices.push_back(0.0f);
+        podiumVertices.push_back(u1); podiumVertices.push_back(0.0f);
 
         podiumVertices.push_back(x2); podiumVertices.push_back(baseY); podiumVertices.push_back(z2);
-        podiumVertices.push_back(1.0f); podiumVertices.push_back(0.0f);
+        podiumVertices.push_back(u2); podiumVertices.push_back(0.0f);
 
         podiumVertices.push_back(x1); podiumVertices.push_back(topY); podiumVertices.push_back(z1);
-        podiumVertices.push_back(0.0f); podiumVertices.push_back(1.0f);
+        podiumVertices.push_back(u1); podiumVertices.push_back(1.0f);
 
         podiumVertices.push_back(x2); podiumVertices.push_back(baseY); podiumVertices.push_back(z2);
-        podiumVertices.push_back(1.0f); podiumVertices.push_back(0.0f);
+        podiumVertices.push_back(u2); podiumVertices.push_back(0.0f);
 
         podiumVertices.push_back(x2); podiumVertices.push_back(topY); podiumVertices.push_back(z2);
-        podiumVertices.push_back(1.0f); podiumVertices.push_back(1.0f);
+        podiumVertices.push_back(u2); podiumVertices.push_back(1.0f);
     }
 
-    // VAO i VBO za pod
     unsigned int floorVAO, floorVBO;
     glGenVertexArrays(1, &floorVAO);
     glGenBuffers(1, &floorVBO);
@@ -210,7 +250,6 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // VAO i VBO za zadnji zid
     unsigned int backWallVAO, backWallVBO;
     glGenVertexArrays(1, &backWallVAO);
     glGenBuffers(1, &backWallVBO);
@@ -222,7 +261,6 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // VAO i VBO za levi zid
     unsigned int leftWallVAO, leftWallVBO;
     glGenVertexArrays(1, &leftWallVAO);
     glGenBuffers(1, &leftWallVBO);
@@ -234,7 +272,6 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // VAO i VBO za desni zid
     unsigned int rightWallVAO, rightWallVBO;
     glGenVertexArrays(1, &rightWallVAO);
     glGenBuffers(1, &rightWallVBO);
@@ -246,7 +283,6 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    // VAO i VBO za podijum
     unsigned int podiumVAO, podiumVBO;
     glGenVertexArrays(1, &podiumVAO);
     glGenBuffers(1, &podiumVBO);
@@ -258,9 +294,22 @@ int main() {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+    unsigned int cubeVAO, cubeVBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glBindVertexArray(cubeVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
     while (!glfwWindowShouldClose(window)) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
             glfwSetWindowShouldClose(window, true);
+
+        float timeValue = (float)glfwGetTime() * 0.5f;
 
         glClearColor(0.15f, 0.16f, 0.21f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -273,7 +322,7 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        // 1. Iscrtavanje poda
+        // Pod
         glm::mat4 model = glm::mat4(1.0f);
         glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
         glActiveTexture(GL_TEXTURE0);
@@ -282,50 +331,64 @@ int main() {
         glBindVertexArray(floorVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // 2. Iscrtavanje zidova
+        // Zidovi
         glBindTexture(GL_TEXTURE_2D, wallTexture);
-
         glBindVertexArray(backWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
         glBindVertexArray(leftWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
-
         glBindVertexArray(rightWallVAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
 
-        // 3. Iscrtavanje 5 podijuma za automobile sa novom podijum tekstukrom i razmakom
-        glBindTexture(GL_TEXTURE_2D, podiumTexture);
-        glBindVertexArray(podiumVAO);
+        // Pozicije podijuma u salonu
+        glm::vec3 podiumPositions[5] = {
+            glm::vec3( 0.0f, 0.0f,  0.0f),
+            glm::vec3(-6.0f, 0.0f,  2.5f),
+            glm::vec3(-6.0f, 0.0f, -4.5f),
+            glm::vec3( 6.0f, 0.0f,  2.5f),
+            glm::vec3( 6.0f, 0.0f, -4.5f)
+        };
 
-        // Centralni podijum
-        model = glm::mat4(1.0f);
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+        for (int i = 0; i < 5; i++) {
+            // 1. Iscrtavanje podijuma
+            glBindTexture(GL_TEXTURE_2D, podiumTexture);
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, podiumPositions[i]);
+            glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            glBindVertexArray(podiumVAO);
+            glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
 
-        // Levi prednji podijum
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-6.0f, 0.0f, 2.5f));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+            // 2. Definisanje rotirajućeg automobila tačno na sredini svakog podijuma
+            glm::mat4 carModelBase = glm::mat4(1.0f);
+            carModelBase = glm::translate(carModelBase, podiumPositions[i] + glm::vec3(0.0f, -0.25f, 0.0f));
+            carModelBase = glm::rotate(carModelBase, timeValue + i * 1.2f, glm::vec3(0.0f, 1.0f, 0.0f));
 
-        // Levi zadnji podijum
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(-6.0f, 0.0f, -4.5f));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+            glBindTexture(GL_TEXTURE_2D, wallTexture);
 
-        // Desni prednji podijum
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(6.0f, 0.0f, 2.5f));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+            // Donji deo (karoserija automobila)
+            glm::mat4 bodyModel = glm::scale(carModelBase, glm::vec3(2.4f, 0.5f, 1.2f));
+            bodyModel = glm::translate(bodyModel, glm::vec3(0.0f, 0.5f, 0.0f));
+            drawCube(shaderProgram, cubeVAO, bodyModel);
 
-        // Desni zadnji podijum
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(6.0f, 0.0f, -4.5f));
-        glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(model));
-        glDrawArrays(GL_TRIANGLES, 0, podiumVertices.size() / 5);
+            // Gornji deo (krov / kabina automobila)
+            glm::mat4 cabinModel = glm::scale(carModelBase, glm::vec3(1.2f, 0.45f, 1.0f));
+            cabinModel = glm::translate(cabinModel, glm::vec3(-0.1f, 1.35f, 0.0f));
+            drawCube(shaderProgram, cubeVAO, cabinModel);
+
+            // Točkovi automobila (4 komada)
+            float wheelOffsets[4][2] = {
+                { 0.7f,  0.65f},
+                { 0.7f, -0.65f},
+                {-0.7f,  0.65f},
+                {-0.7f, -0.65f}
+            };
+
+            for(int w = 0; w < 4; w++) {
+                glm::mat4 wheelModel = glm::scale(carModelBase, glm::vec3(0.4f, 0.4f, 0.2f));
+                wheelModel = glm::translate(wheelModel, glm::vec3(wheelOffsets[w][0] / 0.4f, 0.3f / 0.4f, wheelOffsets[w][1] / 0.2f));
+                drawCube(shaderProgram, cubeVAO, wheelModel);
+            }
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -341,6 +404,8 @@ int main() {
     glDeleteBuffers(1, &rightWallVBO);
     glDeleteVertexArrays(1, &podiumVAO);
     glDeleteBuffers(1, &podiumVBO);
+    glDeleteVertexArrays(1, &cubeVAO);
+    glDeleteBuffers(1, &cubeVBO);
     glDeleteProgram(shaderProgram);
 
     glfwTerminate();
