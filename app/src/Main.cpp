@@ -1,4 +1,4 @@
-#include <../libs/glad/include/glad/glad.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -8,7 +8,7 @@
 #include <cmath>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <../libs/stb/include/stb_image.h>
+#include <stb_image.h>
 
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
@@ -104,9 +104,11 @@ int main() {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
-    unsigned int floorTexture = loadTexture("resources/textures/tiles.jpg");
-    unsigned int wallTexture = loadTexture("resources/textures/zidovi.jpg");
-    unsigned int podiumTexture = loadTexture("resources/textures/podium1.jpg");
+    // Apsolutna putanja do resursa da izbegnemo probleme sa radnim direktorijumom
+    std::string basePath = "/home/ixion/RacunarskaGrafika/app/resources/";
+    unsigned int floorTexture = loadTexture((basePath + "textures/tiles.jpg").c_str());
+    unsigned int wallTexture = loadTexture((basePath + "textures/zidovi.jpg").c_str());
+    unsigned int podiumTexture = loadTexture((basePath + "textures/podium1.jpg").c_str());
 
     float floorVertices[] = {
          10.0f, -0.5f,  10.0f,   10.0f,  0.0f,

@@ -192,10 +192,10 @@ The pointer to the `resource` that the `ResourcesController` returns is a *non-o
 
 ### How to add a model?
 
-The `resources/models/` directory stores all the models. Let's add a backpack model from the course.
+The `app/resources` directory stores all the models. Let's add a backpack model from the course.
 
-1. Create a directory, `resources/models/backpack.`
-2. Copy the `backpack` model files into the `resources/models/backpack`.
+1. Create a directory, `app/resources`
+2. Copy the `backpack` model files into the `app/resources`.
 3. Add a configuration for your model in the config.json
 
 ```
@@ -231,7 +231,7 @@ backpack->draw(shader);
 
 ### How to add a texture?
 
-1. Add a texture file `awesomeface.png` to the `resources/textures` directory
+1. Add a texture file `awesomeface.png` to the `app/resources` directory
 2. Use it in the App (`ResourcesController` will automatically load it)
 
 ```cpp
@@ -240,7 +240,7 @@ Texture* texture = engine::core::Controller::get<ResourcesController>()->texture
 
 ### How to add a shader?
 
-1. Create a `your_shader.glsl` in the `resources/shaders/your_shader.glsl`.
+1. Create a `your_shader.glsl` in the `app/resources`.
 2. Implement `vertex`, `fragment`, and `geometry` (optional), shaders in the same file.
 3. Use it in the App:
 
@@ -273,7 +273,7 @@ void main() {
 }
 ```
 
-`ResourcesController` will load and compile all the shaders in the `resources/shaders` directory.
+`ResourcesController` will load and compile all the shaders in the `app/resources` directory.
 
 ### How to draw a GUI?
 
