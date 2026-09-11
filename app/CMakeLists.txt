@@ -6,7 +6,9 @@ file(GLOB headers include/*.hpp)
 
 include_directories(include/)
 
-add_executable(${PROJECT_NAME} ${sources} ${headers})
+add_executable(${PROJECT_NAME} ${sources} ${headers}
+        src/MainApp.cpp
+        src/MainApp.hpp)
 
 # Povezivanje sa engine-om i dodavanje include putanja
 target_link_libraries(${PROJECT_NAME} PRIVATE matf-rg-engine)
