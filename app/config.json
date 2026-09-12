@@ -4,6 +4,14 @@
       "porsche": {
         "path": "porsche/scene.gltf",
         "flip_uvs": false
+      },
+      "bugatti": {
+        "path": "bugatti/scene.gltf",
+        "flip_uvs": false
+      },
+      "lexus": {
+        "path": "lexus/scene.gltf",
+        "flip_uvs": false
       }
     }
   },
