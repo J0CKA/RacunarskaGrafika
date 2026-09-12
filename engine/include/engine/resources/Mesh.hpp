@@ -50,12 +50,19 @@ private:
     * @param indices The indices in the mesh.
     * @param textures The textures in the mesh.
      */
-    Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
-         std::vector<Texture *> textures);
+    Mesh(
+    const std::vector<Vertex> &vertices,
+    const std::vector<uint32_t> &indices,
+    std::vector<Texture *> textures,
+    const glm::vec4 &diffuseColor,
+    float opacity
+);
 
     uint32_t m_vao{0};
     uint32_t m_num_indices{0};
     std::vector<Texture *> m_textures;
+    glm::vec4 m_diffuse_color{1.0f};
+    float m_opacity{1.0f};
 };
 }// namespace engine::resources
 

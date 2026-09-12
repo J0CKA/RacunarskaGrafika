@@ -123,6 +123,12 @@ void create_textured_vao(unsigned int &vao, unsigned int &vbo, const float *vert
 void MainController::initialize() {
     engine::graphics::OpenGL::enable_depth_testing();
 
+    glEnable(GL_BLEND);
+    glBlendFunc(
+        GL_SRC_ALPHA,
+        GL_ONE_MINUS_SRC_ALPHA
+    );
+
     create_floor();
     create_walls();
     create_podium();
@@ -331,7 +337,7 @@ void MainController::draw() {
     car_shader->set_mat4("view", view);
     car_shader->set_mat4("projection", projection);
     car_shader->set_vec3("lightPos", glm::vec3(4.0f, 6.0f, 4.0f));
-    car_shader->set_vec3("viewPos", glm::vec3(0.0f, 3.0f, 10.0f));
+    car_shader->set_vec3("viewPos", glm::vec3(0.0f, 3.0f, 11.0f));
 
     // PORSCHE
     {

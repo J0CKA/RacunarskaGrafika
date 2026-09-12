@@ -10,8 +10,13 @@
 
 namespace engine::resources {
 
-Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices,
-           std::vector<Texture *> textures) {
+Mesh::Mesh(
+    const std::vector<Vertex> &vertices,
+    const std::vector<uint32_t> &indices,
+    std::vector<Texture *> textures,
+    const glm::vec4 &diffuseColor,
+    float opacity
+) {
     // NOLINTBEGIN
     static_assert(std::is_trivial_v<Vertex>);
     uint32_t vao, vbo, ebo;
@@ -46,6 +51,9 @@ Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32_t> &ind
     m_vao = vao;
     m_num_indices = indices.size();
     m_textures = std::move(textures);
+
+    m_diffuse_color = diffuseColor;
+    m_opacity = opacity;
 }
 
 void Mesh::draw(const Shader *shader) {
@@ -55,6 +63,9 @@ void Mesh::draw(const Shader *shader) {
     uniform_name.reserve(32);
 
     bool has_diffuse_texture = false;
+    bool has_specular_texture = false;
+    bool has_normal_texture = false;
+    bool has_height_texture = false;
 
     for (int i = 0; i < static_cast<int>(m_textures.size()); i++) {
 
@@ -85,6 +96,15 @@ void Mesh::draw(const Shader *shader) {
         if (texture_type == "texture_diffuse") {
             has_diffuse_texture = true;
         }
+        else if (texture_type == "texture_specular") {
+            has_specular_texture = true;
+        }
+        else if (texture_type == "texture_normal") {
+            has_normal_texture = true;
+        }
+        else if (texture_type == "texture_height") {
+            has_height_texture = true;
+        }
 
         CHECKED_GL_CALL(
             glBindTexture,
@@ -96,8 +116,27 @@ void Mesh::draw(const Shader *shader) {
     }
 
     shader->set_int(
-        "hasDiffuseTexture",
-        has_diffuse_texture ? 1 : 0
+    "hasSpecularTexture",
+    has_specular_texture ? 1 : 0
+);
+
+    shader->set_int(
+        "hasNormalTexture",
+        has_normal_texture ? 1 : 0
+    );
+
+    shader->set_int(
+        "hasHeightTexture",
+        has_height_texture ? 1 : 0
+    );
+    shader->set_vec4(
+    "diffuseColor",
+    m_diffuse_color
+);
+
+    shader->set_float(
+        "opacity",
+        m_opacity
     );
 
     CHECKED_GL_CALL(

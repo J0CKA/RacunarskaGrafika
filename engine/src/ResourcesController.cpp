@@ -19,6 +19,8 @@ void ResourcesController::initialize() {
     load_skyboxes();
 }
 
+
+
 void ResourcesController::terminate() {
     for (auto &[name, resource]: m_models) {
         resource->destroy();
@@ -503,20 +505,51 @@ void AssimpSceneProcessor::process_mesh(
         }
     }
 
+    auto *material = m_scene->mMaterials[mesh->mMaterialIndex];
+    aiColor4D diffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    float opacity = 1.0f;
 
-    auto material =
-        m_scene->mMaterials[mesh->mMaterialIndex];
+    material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+    material->Get(AI_MATKEY_OPACITY, opacity);
+
+    aiString materialName;
+    material->Get(AI_MATKEY_NAME, materialName);
+
+    if (material->GetTextureCount(aiTextureType_DIFFUSE) == 0) {
+        aiColor4D diffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+        float opacity = 1.0f;
+
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor);
+        material->Get(AI_MATKEY_OPACITY, opacity);
+
+        spdlog::info(
+            "Material {} | no diffuse | color=({}, {}, {}, {}) | opacity={}",
+            materialName.C_Str(),
+            diffuseColor.r,
+            diffuseColor.g,
+            diffuseColor.b,
+            diffuseColor.a,
+            opacity
+        );
+    }
 
     std::vector<Texture *> textures =
         process_materials(material);
 
     m_meshes.emplace_back(
-        Mesh(
-            vertices,
-            indices,
-            std::move(textures)
-        )
-    );
+    Mesh(
+        vertices,
+        indices,
+        std::move(textures),
+        glm::vec4(
+            diffuseColor.r,
+            diffuseColor.g,
+            diffuseColor.b,
+            diffuseColor.a
+        ),
+        opacity
+    )
+);
 }
 
 
