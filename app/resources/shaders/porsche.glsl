@@ -42,14 +42,24 @@ in vec2 TexCoords;
 out vec4 FragColor;
 
 uniform sampler2D texture_diffuse1;
+uniform int hasDiffuseTexture;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
 
 void main()
 {
-    vec3 baseColor =
-        texture(texture_diffuse1, TexCoords).rgb;
+    vec3 baseColor;
+
+    if (hasDiffuseTexture == 1)
+    {
+        baseColor =
+            texture(texture_diffuse1, TexCoords).rgb;
+    }
+    else
+    {
+        baseColor = vec3(0.7, 0.7, 0.7);
+    }
 
     vec3 normal =
         normalize(Normal);
