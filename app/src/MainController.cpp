@@ -339,7 +339,7 @@ void MainController::draw() {
 
         model = glm::translate(
             model,
-            glm::vec3(0.0f, 0.2f, 0.0f)
+            glm::vec3(0.0f, -0.45f, 0.0f)
         );
 
         model = glm::rotate(
@@ -364,7 +364,7 @@ void MainController::draw() {
         // POZICIJA
         model = glm::translate(
             model,
-            glm::vec3(-6.5f, 0.3f, -4.0f)
+            glm::vec3(-6.5f, 0.15f, -4.0f)
         );
 
         // ROTACIJA - samo okretanje oko Y ose
@@ -391,7 +391,7 @@ void MainController::draw() {
 
         model = glm::translate(
             model,
-            glm::vec3(6.5f, 0.2f, -4.0f)
+            glm::vec3(6.5f, -0.45f, -4.0f)
         );
 
         // Ako je potrebno promeni orijentaciju
@@ -409,7 +409,7 @@ void MainController::draw() {
 
         model = glm::scale(
             model,
-            glm::vec3(0.01f)
+            glm::vec3(1.0f)
         );
 
         car_shader->set_mat4("model", model);
@@ -435,7 +435,7 @@ void MainController::terminate() {
     glDeleteBuffers(1, &m_right_wall_vbo);
 
     glDeleteVertexArrays(1, &m_podium_vao); // ili m_podium_vao zavisno od zaglavlja
-    glDeleteVertexArrays(1, &m_podium_vao);
+
     glDeleteBuffers(1, &m_podium_vbo);
 
     glDeleteVertexArrays(1, &m_cube_vao);

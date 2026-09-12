@@ -15,20 +15,11 @@ uniform mat4 projection;
 
 void main()
 {
-    FragPos =
-        vec3(model * vec4(aPos, 1.0));
-
-    Normal =
-        mat3(transpose(inverse(model))) *
-        aNormal;
-
+    FragPos = vec3(model * vec4(aPos, 1.0));
+    Normal = mat3(transpose(inverse(model))) * aNormal;
     TexCoords = aTexCoords;
 
-    gl_Position =
-        projection *
-        view *
-        model *
-        vec4(aPos, 1.0);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
 
 
@@ -53,51 +44,36 @@ void main()
 
     if (hasDiffuseTexture == 1)
     {
-        vec3 baseColor = texture(texture_diffuse1, TexCoords).rgb;
+        baseColor = texture(texture_diffuse1, TexCoords).rgb;
     }
     else
     {
-        baseColor = vec3(0.7, 0.7, 0.7);
+        baseColor = vec3(1.0);
     }
 
-    vec3 normal =
-        normalize(Normal);
+    vec3 normal = normalize(Normal);
 
-    vec3 lightDirection =
-        normalize(lightPos - FragPos);
+    vec3 ambient = 0.45 * baseColor;
 
-    float diffuse =
-        max(dot(normal, lightDirection), 0.0);
+    vec3 lightDirection = normalize(lightPos - FragPos);
+    float diffuse = max(dot(normal, lightDirection), 0.0);
 
-    vec3 viewDirection =
-        normalize(viewPos - FragPos);
+    vec3 diffuseColor = 0.55 * diffuse * baseColor;
 
-    vec3 reflectDirection =
-        reflect(-lightDirection, normal);
+    vec3 viewDirection = normalize(viewPos - FragPos);
+    vec3 reflectDirection = reflect(-lightDirection, normal);
 
-    float specular =
-        pow(
-            max(
-                dot(viewDirection, reflectDirection),
-                0.0
-            ),
-            32.0
-        );
+    float specular = pow(
+        max(dot(viewDirection, reflectDirection), 0.0),
+        64.0
+    );
 
-    vec3 ambient =
-        0.20 * baseColor;
+    vec3 specularColor = 0.05 * specular * vec3(1.0);
 
-    vec3 diffuseColor =
-        0.70 * diffuse * baseColor;
+    vec3 finalColor =
+        ambient +
+        diffuseColor +
+        specularColor;
 
-    vec3 specularColor =
-        0.30 * specular * vec3(1.0);
-
-    FragColor =
-        vec4(
-            ambient +
-            diffuseColor +
-            specularColor,
-            1.0
-        );
+    FragColor = vec4(finalColor, 1.0);
 }
