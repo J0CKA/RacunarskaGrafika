@@ -313,6 +313,8 @@ void MainController::draw() {
     }
 
 
+
+
     // -------------------------
     // AUTOMOBILI
     // -------------------------
@@ -359,34 +361,25 @@ void MainController::draw() {
     {
         glm::mat4 model(1.0f);
 
+        // POZICIJA
         model = glm::translate(
             model,
-            glm::vec3(-6.5f, -0.2f, -4.0f)
+            glm::vec3(-6.5f, 0.3f, -4.0f)
         );
 
-        // Rotiramo ga za 90 stepeni da se digne na točkove (prilagodi osi X, Y ili Z ako zatreba)
-        model = glm::rotate(
-            model,
-            glm::radians(-90.0f),
-            glm::vec3(1.0f, 0.0f, 0.0f)
-        );
-
-        // Dodajemo rotaciju oko Y ose da se vrti na podijumu kao i drugi automobili
+        // ROTACIJA - samo okretanje oko Y ose
         model = glm::rotate(
             model,
             m_time,
-            glm::vec3(0.0f, 0.0f, 1.0f)
+            glm::vec3(0.0f, 1.0f, 0.0f)
         );
 
         model = glm::scale(
             model,
-            glm::vec3(0.4f) 
+            glm::vec3(1.0f)
         );
 
-        car_shader->set_mat4(
-            "model",
-            model
-        );
+        car_shader->set_mat4("model", model);
 
         bugatti->draw(car_shader);
     }

@@ -53,8 +53,7 @@ void main()
 
     if (hasDiffuseTexture == 1)
     {
-        baseColor =
-            texture(texture_diffuse1, TexCoords).rgb;
+        vec3 baseColor = texture(texture_diffuse1, TexCoords).rgb;
     }
     else
     {
