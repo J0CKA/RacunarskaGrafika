@@ -1,5 +1,5 @@
 /**
- * @file Mesh.hpp
+* @file Mesh.hpp
  * @brief Defines the Mesh class that serves as the interface for mesh rendering and storing processed assimp scenes.
  */
 
@@ -43,6 +43,10 @@ public:
     */
     void destroy();
 
+    bool is_transparent() const {
+        return m_transparent;
+    }
+
 private:
     /**
     * @brief Constructs a Mesh object.
@@ -55,7 +59,11 @@ private:
     const std::vector<uint32_t> &indices,
     std::vector<Texture *> textures,
     const glm::vec4 &diffuseColor,
-    float opacity
+    float opacity,
+    bool transparent,
+    bool alphaMask,
+    bool glass,
+    float alphaCutoff
 );
 
     uint32_t m_vao{0};
@@ -63,6 +71,10 @@ private:
     std::vector<Texture *> m_textures;
     glm::vec4 m_diffuse_color{1.0f};
     float m_opacity{1.0f};
+    bool m_transparent{false};
+    bool m_alpha_mask{false};
+    bool m_is_glass{false};
+    float m_alpha_cutoff{0.5f};
 };
 }// namespace engine::resources
 

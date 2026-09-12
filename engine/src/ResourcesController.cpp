@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <cctype>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -515,6 +517,32 @@ void AssimpSceneProcessor::process_mesh(
     aiString materialName;
     material->Get(AI_MATKEY_NAME, materialName);
 
+    std::string material_name = materialName.C_Str();
+    std::transform(
+        material_name.begin(),
+        material_name.end(),
+        material_name.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); }
+    );
+
+    const bool is_glass =
+        material_name.find("glass") != std::string::npos ||
+        material_name.find("window") != std::string::npos ||
+        material_name.find("windshield") != std::string::npos;
+
+    const bool is_alpha_mask =
+        material_name.find("windowmask") != std::string::npos ||
+        material_name.find("_mask") != std::string::npos;
+
+    const bool is_transparent =
+        is_glass ||
+        is_alpha_mask ||
+        opacity < 0.999f ||
+        material_name.find("opac") != std::string::npos ||
+        material_name.find("opacity") != std::string::npos ||
+        material_name.find("trans") != std::string::npos ||
+        material_name.find("fade") != std::string::npos;
+
     if (material->GetTextureCount(aiTextureType_DIFFUSE) == 0) {
         aiColor4D diffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
         float opacity = 1.0f;
@@ -547,7 +575,11 @@ void AssimpSceneProcessor::process_mesh(
             diffuseColor.b,
             diffuseColor.a
         ),
-        opacity
+        opacity,
+        is_transparent,
+        is_alpha_mask,
+        is_glass,
+        0.5f
     )
 );
 }

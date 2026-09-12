@@ -11,6 +11,7 @@
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
+#include <stdexcept>
 
 namespace {
 
@@ -133,6 +134,8 @@ void MainController::initialize() {
     create_walls();
     create_podium();
     create_cube();
+    create_framebuffer();
+    create_screen_quad();
 }
 
 void MainController::create_floor() {
@@ -203,8 +206,135 @@ void MainController::create_podium() {
     glBindVertexArray(0);
 }
 
+
+void MainController::create_framebuffer() {
+    glGenFramebuffers(1, &m_framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+
+    glGenTextures(1, &m_colorTexture);
+    glBindTexture(GL_TEXTURE_2D, m_colorTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB,
+                 m_framebufferWidth, m_framebufferHeight,
+                 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, m_colorTexture, 0);
+
+    glGenRenderbuffers(1, &m_depthStencilRbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_depthStencilRbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
+                           m_framebufferWidth, m_framebufferHeight);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                              GL_RENDERBUFFER, m_depthStencilRbo);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        throw std::runtime_error("Framebuffer nije kompletan.");
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void MainController::create_screen_quad() {
+    const float quad[] = {
+        -1.0f,  1.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+
+        -1.0f,  1.0f, 0.0f, 1.0f,
+         1.0f, -1.0f, 1.0f, 0.0f,
+         1.0f,  1.0f, 1.0f, 1.0f
+    };
+
+    glGenVertexArrays(1, &m_screen_vao);
+    glGenBuffers(1, &m_screen_vbo);
+    glBindVertexArray(m_screen_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_screen_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
+                          4 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE,
+                          4 * sizeof(float),
+                          reinterpret_cast<void *>(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindVertexArray(0);
+}
+
+void MainController::draw_screen_quad() {
+    auto resources =
+        engine::core::Controller::get<engine::resources::ResourcesController>();
+    auto shader = resources->shader("postprocess");
+    shader->use();
+    shader->set_int("screenTexture", 0);
+    shader->set_int("enabled", m_postProcessEnabled ? 1 : 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_colorTexture);
+    glBindVertexArray(m_screen_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
+}
+
+
 void MainController::update() {
-    m_time += 0.01f;
+    auto platform =
+        engine::core::Controller::get<engine::platform::PlatformController>();
+    const float dt = platform->dt();
+
+    m_time += dt * m_porscheSpeed;
+
+    if (platform->key(engine::platform::KeyId::KEY_1).state() ==
+        engine::platform::Key::State::JustPressed)
+        m_pointLightEnabled = !m_pointLightEnabled;
+
+    if (platform->key(engine::platform::KeyId::KEY_2).state() ==
+        engine::platform::Key::State::JustPressed)
+        m_directionalLightEnabled = !m_directionalLightEnabled;
+
+    if (platform->key(engine::platform::KeyId::KEY_J).is_down())
+        m_pointLightPos.x -= 3.0f * dt;
+    if (platform->key(engine::platform::KeyId::KEY_L).is_down())
+        m_pointLightPos.x += 3.0f * dt;
+    if (platform->key(engine::platform::KeyId::KEY_I).is_down())
+        m_pointLightPos.z -= 3.0f * dt;
+    if (platform->key(engine::platform::KeyId::KEY_K).is_down())
+        m_pointLightPos.z += 3.0f * dt;
+
+    if (platform->key(engine::platform::KeyId::KEY_U).is_down())
+        m_pointLightIntensity = glm::min(m_pointLightIntensity + 0.8f * dt, 4.0f);
+    if (platform->key(engine::platform::KeyId::KEY_O).is_down())
+        m_pointLightIntensity = glm::max(m_pointLightIntensity - 0.8f * dt, 0.0f);
+
+    if (platform->key(engine::platform::KeyId::KEY_F).state() ==
+        engine::platform::Key::State::JustPressed)
+        m_postProcessEnabled = !m_postProcessEnabled;
+
+    // E -> 2s -> crveno svetlo -> 2s -> brza rotacija Porsche-a.
+    if (platform->key(engine::platform::KeyId::KEY_E).state() ==
+        engine::platform::Key::State::JustPressed) {
+        m_eventStage = 1;
+        m_eventTimer = 0.0f;
+        m_pointLightColor = glm::vec3(1.0f, 0.85f, 0.65f);
+        m_porscheSpeed = 1.0f;
+    }
+
+    if (m_eventStage == 1 || m_eventStage == 2)
+        m_eventTimer += dt;
+
+    if (m_eventStage == 1 && m_eventTimer >= 2.0f) {
+        m_pointLightColor = glm::vec3(1.0f, 0.08f, 0.03f);
+        m_eventStage = 2;
+        m_eventTimer = 0.0f;
+    }
+
+    if (m_eventStage == 2 && m_eventTimer >= 2.0f) {
+        m_porscheSpeed = 2.8f;
+        m_eventStage = 3;
+    }
 }
 
 void MainController::draw_textured_object(unsigned int vao, int vertex_count, unsigned int texture_id, const glm::mat4 &model) {
@@ -291,6 +421,9 @@ void MainController::draw() {
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+    glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
+
     glClearColor(0.15f, 0.16f, 0.21f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -336,8 +469,15 @@ void MainController::draw() {
 
     car_shader->set_mat4("view", view);
     car_shader->set_mat4("projection", projection);
-    car_shader->set_vec3("lightPos", glm::vec3(4.0f, 6.0f, 4.0f));
+    car_shader->set_vec3("lightPos", m_pointLightPos);
     car_shader->set_vec3("viewPos", glm::vec3(0.0f, 3.0f, 11.0f));
+    car_shader->set_vec3("pointLightColor", m_pointLightColor);
+    car_shader->set_float("pointLightIntensity", m_pointLightIntensity);
+    car_shader->set_int("pointLightEnabled", m_pointLightEnabled ? 1 : 0);
+    car_shader->set_vec3("directionalLightDirection", m_directionalLightDir);
+    car_shader->set_vec3("directionalLightColor", m_directionalLightColor);
+    car_shader->set_float("directionalLightIntensity", m_directionalLightIntensity);
+    car_shader->set_int("directionalLightEnabled", m_directionalLightEnabled ? 1 : 0);
 
     // PORSCHE
     {
@@ -421,6 +561,11 @@ void MainController::draw() {
         car_shader->set_mat4("model", model);
         lexus->draw(car_shader);
     }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
+    glDisable(GL_DEPTH_TEST);
+    draw_screen_quad();
+    glEnable(GL_DEPTH_TEST);
 }
 
 void MainController::end_draw() {
@@ -446,4 +591,10 @@ void MainController::terminate() {
 
     glDeleteVertexArrays(1, &m_cube_vao);
     glDeleteBuffers(1, &m_cube_vbo);
+
+    glDeleteFramebuffers(1, &m_framebuffer);
+    glDeleteTextures(1, &m_colorTexture);
+    glDeleteRenderbuffers(1, &m_depthStencilRbo);
+    glDeleteVertexArrays(1, &m_screen_vao);
+    glDeleteBuffers(1, &m_screen_vbo);
 }

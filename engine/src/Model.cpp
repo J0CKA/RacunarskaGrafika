@@ -6,8 +6,19 @@ namespace engine::resources {
 
 void Model::draw(const Shader *shader) {
     shader->use();
+
+    // Opaque meshes first so their depth is established before
+    // transparent glass/windows are blended over them.
     for (auto &mesh: m_meshes) {
-        mesh.draw(shader);
+        if (!mesh.is_transparent()) {
+            mesh.draw(shader);
+        }
+    }
+
+    for (auto &mesh: m_meshes) {
+        if (mesh.is_transparent()) {
+            mesh.draw(shader);
+        }
     }
 }
 

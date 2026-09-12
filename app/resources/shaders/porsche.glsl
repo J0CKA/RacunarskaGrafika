@@ -10,7 +10,6 @@ layout (location = 4) in vec3 aBitangent;
 out vec3 FragPos;
 out vec3 Normal;
 out vec2 TexCoords;
-
 out vec3 Tangent;
 out vec3 Bitangent;
 
@@ -22,22 +21,15 @@ void main()
 {
     FragPos = vec3(model * vec4(aPos, 1.0));
 
-    mat3 normalMatrix =
-        mat3(transpose(inverse(model)));
-
-    Normal = normalMatrix * aNormal;
-    Tangent = normalMatrix * aTangent;
-    Bitangent = normalMatrix * aBitangent;
+    mat3 normalMatrix = mat3(transpose(inverse(model)));
+    Normal = normalize(normalMatrix * aNormal);
+    Tangent = normalize(normalMatrix * aTangent);
+    Bitangent = normalize(normalMatrix * aBitangent);
 
     TexCoords = aTexCoords;
 
-    gl_Position =
-        projection *
-        view *
-        model *
-        vec4(aPos, 1.0);
+    gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
-
 
 //#shader fragment
 #version 330 core
@@ -45,7 +37,6 @@ void main()
 in vec3 FragPos;
 in vec3 Normal;
 in vec2 TexCoords;
-
 in vec3 Tangent;
 in vec3 Bitangent;
 
@@ -63,6 +54,9 @@ uniform int hasHeightTexture;
 
 uniform vec4 diffuseColor;
 uniform float opacity;
+uniform bool isGlass;
+uniform bool alphaMask;
+uniform float alphaCutoff;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -70,207 +64,100 @@ uniform vec3 viewPos;
 void main()
 {
     // --------------------------------------------------
-    // BASE COLOR
+    // MATERIAL / BASE COLOR
     // --------------------------------------------------
-
-    vec4 diffuseTexture = vec4(1.0);
-
-    if (hasDiffuseTexture == 1)
-    {
-        diffuseTexture = texture(texture_diffuse1, TexCoords);
-    }
-
-    vec3 baseColor;
+    vec4 texColor = vec4(1.0);
 
     if (hasDiffuseTexture == 1)
-    {
-        // Ako postoji tekstura, koristimo NJU kao glavnu boju.
-        // Ne množimo je sa diffuseColor jer to kvari postojeće
-        // boje modela.
-        baseColor = diffuseTexture.rgb;
-    }
-    else
-    {
-        // Ako nema teksture, koristimo boju materijala iz Assimp-a.
-        baseColor = diffuseColor.rgb;
-    }
+        texColor = texture(texture_diffuse1, TexCoords);
 
-    float alpha;
+    vec3 baseColor = hasDiffuseTexture == 1
+        ? texColor.rgb
+        : diffuseColor.rgb;
 
-    if (hasDiffuseTexture == 1)
-    {
-        alpha = diffuseTexture.a * opacity;
-    }
-    else
-    {
-        alpha = diffuseColor.a * opacity;
-    }
+    float alpha = (hasDiffuseTexture == 1 ? texColor.a : diffuseColor.a) * opacity;
 
+    // MASK materials (e.g. Lexus windowmask/grille) are cut out,
+    // not smoothly blended.
+    if (alphaMask && alpha < alphaCutoff)
+        discard;
 
     // --------------------------------------------------
     // NORMAL MAP
     // --------------------------------------------------
-
     vec3 normal = normalize(Normal);
 
     if (hasNormalTexture == 1)
     {
         vec3 tangent = normalize(Tangent);
+        tangent = normalize(tangent - dot(tangent, normal) * normal);
+        vec3 bitangent = normalize(cross(normal, tangent));
 
-        // Ortogonalizacija tangente prema normali
-        tangent =
-            normalize(
-                tangent -
-                dot(tangent, normal) * normal
-            );
-
-        vec3 bitangent =
-            normalize(cross(normal, tangent));
-
-        mat3 TBN =
-            mat3(
-                tangent,
-                bitangent,
-                normal
-            );
-
-        vec3 normalMap =
-            texture(
-                texture_normal1,
-                TexCoords
-            ).rgb;
-
-        normalMap =
-            normalMap * 2.0 - 1.0;
-
-        normal =
-            normalize(TBN * normalMap);
+        mat3 TBN = mat3(tangent, bitangent, normal);
+        vec3 normalMap = texture(texture_normal1, TexCoords).rgb * 2.0 - 1.0;
+        normal = normalize(TBN * normalMap);
     }
 
-
     // --------------------------------------------------
-    // LIGHT
+    // LIGHTING
     // --------------------------------------------------
+    vec3 toLight = lightPos - FragPos;
+    float distanceToLight = length(toLight);
+    vec3 lightDirection = normalize(toLight);
 
-    vec3 lightDirection =
-        normalize(lightPos - FragPos);
+    float attenuation = 1.0 / (1.0 + 0.045 * distanceToLight + 0.0075 * distanceToLight * distanceToLight);
+    float diffuse = max(dot(normal, lightDirection), 0.0);
 
-    float diffuse =
-        max(
-            dot(normal, lightDirection),
-            0.0
-        );
+    vec3 viewDirection = normalize(viewPos - FragPos);
+    vec3 halfwayDirection = normalize(lightDirection + viewDirection);
 
+    float shininess = isGlass ? 96.0 : 48.0;
+    float specular = pow(max(dot(normal, halfwayDirection), 0.0), shininess);
 
-    // --------------------------------------------------
-    // AMBIENT
-    // --------------------------------------------------
+    float specularStrength = isGlass ? 0.85 : 0.28;
 
-    float ambientStrength = 0.18;
-
-    vec3 ambient =
-        ambientStrength * baseColor;
-
-
-    // --------------------------------------------------
-    // DIFFUSE
-    // --------------------------------------------------
-
-    vec3 diffuseLight =
-        0.65 *
-        diffuse *
-        baseColor;
-
-
-    // --------------------------------------------------
-    // SPECULAR
-    // --------------------------------------------------
-
-    vec3 viewDirection =
-        normalize(viewPos - FragPos);
-
-    vec3 reflectDirection =
-        reflect(
-            -lightDirection,
-            normal
-        );
-
-    float specular =
-        pow(
-            max(
-                dot(
-                    viewDirection,
-                    reflectDirection
-                ),
-                0.0
-            ),
-            32.0
-        );
-
-    float specularStrength = 0.08;
-
-    if (hasSpecularTexture == 1)
+    if (hasSpecularTexture == 1 && !isGlass)
     {
-        // Specular mapa je uglavnom INTENZITET,
-        // a ne RGB boja.
-        vec3 specularMap =
-            texture(
-                texture_specular1,
-                TexCoords
-            ).rgb;
-
-        float specularMask =
-            dot(
-                specularMap,
-                vec3(0.299, 0.587, 0.114)
-            );
-
-        specularStrength =
-            0.08 * specularMask;
+        vec3 specMap = texture(texture_specular1, TexCoords).rgb;
+        float specMask = dot(specMap, vec3(0.299, 0.587, 0.114));
+        specularStrength *= specMask;
     }
 
-    vec3 specularColor =
-        specularStrength *
-        specular *
-        vec3(1.0);
-
+    // --------------------------------------------------
+    // BODY / METAL APPEARANCE
+    // --------------------------------------------------
+    vec3 ambient = 0.24 * baseColor;
+    vec3 diffuseLight = 0.78 * diffuse * baseColor * attenuation;
+    vec3 specularLight = specularStrength * specular * vec3(1.0) * attenuation;
 
     // --------------------------------------------------
-    // TRANSPARENT MATERIALS
+    // GLASS
     // --------------------------------------------------
+    if (isGlass)
+    {
+        // Keep the windows dark and slightly blue instead of black,
+        // while the strong Fresnel/specular highlight makes them read
+        // as glass under the showroom light.
+        vec3 glassTint = vec3(0.035, 0.075, 0.105);
+        baseColor = mix(glassTint, baseColor, 0.20);
 
-    // Kod stakla ne želimo jak beli specular koji
-    // može da ga pretvori u crno/belo.
-    float transparencyFactor =
-        1.0 - alpha;
+        float fresnel = pow(1.0 - max(dot(normal, viewDirection), 0.0), 4.0);
+        float glassDiffuse = 0.10 * diffuse * attenuation;
 
-    specularColor *=
-        mix(
-            1.0,
-            0.35,
-            clamp(transparencyFactor, 0.0, 1.0)
-        );
+        ambient = 0.08 * baseColor;
+        diffuseLight = glassDiffuse * baseColor;
+        specularLight = (0.55 + 0.45 * fresnel) * specular * vec3(1.0) * attenuation;
 
+        // Most car glass is visibly transparent but not completely clear.
+        alpha = min(alpha, 0.72);
+    }
 
-    // --------------------------------------------------
-    // FINAL COLOR
-    // --------------------------------------------------
+    vec3 finalColor = ambient + diffuseLight + specularLight;
 
-    vec3 finalColor =
-        ambient +
-        diffuseLight +
-        specularColor;
+    // A small minimum level prevents dark body materials from becoming
+    // completely black when the point light is far from one of the cars.
+    finalColor = max(finalColor, baseColor * 0.055);
+    finalColor = clamp(finalColor, 0.0, 1.0);
 
-    finalColor =
-        clamp(
-            finalColor,
-            0.0,
-            1.0
-        );
-
-    FragColor =
-        vec4(
-            finalColor,
-            alpha
-        );
+    FragColor = vec4(finalColor, alpha);
 }

@@ -30,6 +30,9 @@ private:
     );
 
     void draw_podium(const glm::vec3 &position);
+    void create_framebuffer();
+    void create_screen_quad();
+    void draw_screen_quad();
 
 private:
     unsigned int m_floor_vao = 0;
@@ -53,6 +56,29 @@ private:
     int m_podium_vertex_count = 0;
 
     float m_time = 0.0f;
+
+    glm::vec3 m_pointLightPos{4.0f, 6.0f, 4.0f};
+    glm::vec3 m_pointLightColor{1.0f, 0.85f, 0.65f};
+    float m_pointLightIntensity = 1.4f;
+    bool m_pointLightEnabled = true;
+
+    glm::vec3 m_directionalLightDir{-0.4f, -1.0f, -0.25f};
+    glm::vec3 m_directionalLightColor{0.55f, 0.65f, 1.0f};
+    float m_directionalLightIntensity = 0.45f;
+    bool m_directionalLightEnabled = true;
+
+    int m_eventStage = 0;
+    float m_eventTimer = 0.0f;
+    float m_porscheSpeed = 1.0f;
+
+    unsigned int m_framebuffer = 0;
+    unsigned int m_colorTexture = 0;
+    unsigned int m_depthStencilRbo = 0;
+    unsigned int m_screen_vao = 0;
+    unsigned int m_screen_vbo = 0;
+    bool m_postProcessEnabled = true;
+    int m_framebufferWidth = 1280;
+    int m_framebufferHeight = 720;
 
     std::vector<float> m_podium_vertices;
 };

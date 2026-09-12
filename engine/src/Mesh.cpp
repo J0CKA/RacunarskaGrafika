@@ -15,7 +15,11 @@ Mesh::Mesh(
     const std::vector<uint32_t> &indices,
     std::vector<Texture *> textures,
     const glm::vec4 &diffuseColor,
-    float opacity
+    float opacity,
+    bool transparent,
+    bool alphaMask,
+    bool glass,
+    float alphaCutoff
 ) {
     // NOLINTBEGIN
     static_assert(std::is_trivial_v<Vertex>);
@@ -54,6 +58,10 @@ Mesh::Mesh(
 
     m_diffuse_color = diffuseColor;
     m_opacity = opacity;
+    m_transparent = transparent;
+    m_alpha_mask = alphaMask;
+    m_is_glass = glass;
+    m_alpha_cutoff = alphaCutoff;
 }
 
 void Mesh::draw(const Shader *shader) {
@@ -116,9 +124,14 @@ void Mesh::draw(const Shader *shader) {
     }
 
     shader->set_int(
-    "hasSpecularTexture",
-    has_specular_texture ? 1 : 0
-);
+        "hasDiffuseTexture",
+        has_diffuse_texture ? 1 : 0
+    );
+
+    shader->set_int(
+        "hasSpecularTexture",
+        has_specular_texture ? 1 : 0
+    );
 
     shader->set_int(
         "hasNormalTexture",
@@ -139,6 +152,27 @@ void Mesh::draw(const Shader *shader) {
         m_opacity
     );
 
+    shader->set_bool(
+        "isGlass",
+        m_is_glass
+    );
+
+    shader->set_bool(
+        "alphaMask",
+        m_alpha_mask
+    );
+
+    shader->set_float(
+        "alphaCutoff",
+        m_alpha_cutoff
+    );
+
+    if (m_transparent) {
+        CHECKED_GL_CALL(glEnable, GL_BLEND);
+        CHECKED_GL_CALL(glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        CHECKED_GL_CALL(glDepthMask, GL_FALSE);
+    }
+
     CHECKED_GL_CALL(
         glBindVertexArray,
         m_vao
@@ -156,6 +190,10 @@ void Mesh::draw(const Shader *shader) {
         glBindVertexArray,
         0
     );
+
+    if (m_transparent) {
+        CHECKED_GL_CALL(glDepthMask, GL_TRUE);
+    }
 
     CHECKED_GL_CALL(
         glActiveTexture,
