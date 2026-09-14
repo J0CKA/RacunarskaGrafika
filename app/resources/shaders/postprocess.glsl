@@ -24,15 +24,5 @@ uniform int enabled;
 void main()
 {
     vec3 color = texture(screenTexture, TexCoord).rgb;
-
-    if (enabled == 1)
-    {
-        color = (color - 0.5) * 1.10 + 0.5;
-
-        float dist = distance(TexCoord, vec2(0.5));
-        float vignette = 1.0 - smoothstep(0.25, 0.75, dist);
-        color *= mix(0.72, 1.0, vignette);
-    }
-
     FragColor = vec4(color, 1.0);
 }

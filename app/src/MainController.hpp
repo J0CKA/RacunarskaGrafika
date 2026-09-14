@@ -30,7 +30,10 @@ private:
     );
 
     void draw_podium(const glm::vec3 &position);
+    void draw_depth_scene(const glm::mat4 shadowMatrices[6]);
+    void draw_depth_object(unsigned int vao, int vertex_count, const glm::mat4 &model);
     void create_framebuffer();
+    void create_point_shadow_buffer();
     void create_screen_quad();
     void draw_screen_quad();
 
@@ -71,14 +74,34 @@ private:
     float m_eventTimer = 0.0f;
     float m_porscheSpeed = 1.0f;
 
+    // Kamera
+    glm::vec3 m_cameraPos{0.0f, 3.0f, 11.0f};
+    float m_cameraYaw = -90.0f;
+    float m_cameraPitch = -10.0f;
+    float m_cameraMoveSpeed = 6.0f;
+    float m_cameraLookSpeed = 70.0f;
+
+    // Framebuffer with post-processing
     unsigned int m_framebuffer = 0;
     unsigned int m_colorTexture = 0;
     unsigned int m_depthStencilRbo = 0;
+
+
     unsigned int m_screen_vao = 0;
     unsigned int m_screen_vbo = 0;
+
+    // Point-shadow cubemap
+    unsigned int m_shadowFbo = 0;
+    unsigned int m_depthCubemap = 0;
+    const float m_shadowNearPlane = 0.1f;
+    const float m_shadowFarPlane = 30.0f;
+
     bool m_postProcessEnabled = true;
+    bool m_pointShadowsEnabled = true;
+
     int m_framebufferWidth = 1280;
     int m_framebufferHeight = 720;
+    int m_shadowSize = 1024;
 
     std::vector<float> m_podium_vertices;
 };
