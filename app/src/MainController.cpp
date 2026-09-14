@@ -370,7 +370,6 @@ void MainController::update() {
     auto platform = engine::core::Controller::get<engine::platform::PlatformController>();
     const float dt = platform->dt();
 
-    // Kamera: W/S napred-nazad, A/D levo-desno, PageUp/PageDown gore-dole, strelice za pogled.
     glm::vec3 front = camera_front(m_cameraYaw, m_cameraPitch);
     glm::vec3 right = glm::normalize(glm::cross(front, glm::vec3(0.0f, 1.0f, 0.0f)));
 
@@ -433,9 +432,7 @@ void MainController::draw() {
     glDisable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    // ------------------------------------------------------------
-    // 1) POINT SHADOW CUBEMAP
-    // ------------------------------------------------------------
+
     if (m_pointShadowsEnabled && m_pointLightEnabled) {
         glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), 1.0f, m_shadowNearPlane, m_shadowFarPlane);
         const glm::vec3 p = m_pointLightPos;
@@ -459,9 +456,6 @@ void MainController::draw() {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    // ------------------------------------------------------------
-    // 2) MAIN HDR SCENE + BRIGHT PASS
-    // ------------------------------------------------------------
     glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
@@ -527,9 +521,6 @@ void MainController::draw() {
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // ------------------------------------------------------------
-    // 3) FINAL POST-PROCESSING
-    // ------------------------------------------------------------
     glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
     glDisable(GL_DEPTH_TEST);
     draw_screen_quad();

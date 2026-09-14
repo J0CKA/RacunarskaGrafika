@@ -74,14 +74,12 @@ private:
     float m_eventTimer = 0.0f;
     float m_porscheSpeed = 1.0f;
 
-    // Kamera
     glm::vec3 m_cameraPos{0.0f, 3.0f, 11.0f};
     float m_cameraYaw = -90.0f;
     float m_cameraPitch = -10.0f;
     float m_cameraMoveSpeed = 6.0f;
     float m_cameraLookSpeed = 70.0f;
 
-    // Framebuffer with post-processing
     unsigned int m_framebuffer = 0;
     unsigned int m_colorTexture = 0;
     unsigned int m_depthStencilRbo = 0;
@@ -90,7 +88,6 @@ private:
     unsigned int m_screen_vao = 0;
     unsigned int m_screen_vbo = 0;
 
-    // Point-shadow cubemap
     unsigned int m_shadowFbo = 0;
     unsigned int m_depthCubemap = 0;
     const float m_shadowNearPlane = 0.1f;

@@ -69,8 +69,7 @@ void main()
     if (shadowsEnabled == 1)
         shadow = pointShadow(FragPos);
 
-    // Namerno ostavljamo deo svetla u senci da senka bude jasno vidljiva,
-    // ali ne potpuno crna.
+    
     color.rgb *= mix(1.0, 0.28, shadow);
     FragColor = color;
 }
