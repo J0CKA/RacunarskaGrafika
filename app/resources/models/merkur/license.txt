@@ -1,0 +1,11 @@
+Model Information:
+* title:	Mercury planet (brass stylised)
+* source:	https://sketchfab.com/3d-models/mercury-planet-brass-stylised-bbb89fb4f48e4b7287c44cdcb8ea17a5
+* author:	SebastianSosnowski (https://sketchfab.com/SebastianSosnowski)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Mercury planet (brass stylised)" (https://sketchfab.com/3d-models/mercury-planet-brass-stylised-bbb89fb4f48e4b7287c44cdcb8ea17a5) by SebastianSosnowski (https://sketchfab.com/SebastianSosnowski) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

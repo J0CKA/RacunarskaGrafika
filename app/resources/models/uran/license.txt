@@ -1,0 +1,11 @@
+Model Information:
+* title:	Urano
+* source:	https://sketchfab.com/3d-models/urano-ea7fd910b25d46028c2316efbf99322f
+* author:	Sara Robisco (https://sketchfab.com/robiscogames)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Urano" (https://sketchfab.com/3d-models/urano-ea7fd910b25d46028c2316efbf99322f) by Sara Robisco (https://sketchfab.com/robiscogames) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

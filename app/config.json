@@ -1,11 +1,38 @@
 {
   "resources": {
     "models": {
+      "sun" : {
+        "path" : "sun/scene.gltf"
+      },
+      "jupiter" : {
+        "path" : "jupiter/scene.gltf"
+      },
+      "mars" : {
+        "path" : "mars/scene.gltf"
+      },
+      "merkur" : {
+        "path" : "merkur/scene.gltf"
+      },
+      "neptun" : {
+        "path" : "neptun/scene.gltf"
+      },
+      "saturn" : {
+        "path" : "saturn/scene.gltf"
+      },
+      "uran" : {
+        "path" : "uran/scene.gltf"
+      },
+      "venera" : {
+        "path" : "venera/scene.gltf"
+      },
+      "zemlja" : {
+        "path" : "zemlja/scene.gltf"
+      }
     }
   },
   "window": {
-    "height": 600,
-    "title": "Hello, window!",
-    "width": 800
+    "height": 720,
+    "title": "SVEMIR",
+    "width": 1280
   }
 }
