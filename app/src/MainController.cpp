@@ -170,6 +170,29 @@ namespace app {
     }
 
     void MainController::update(){
+        auto platform =engine::core::Controller::get<engine::platform::PlatformController>();
+        float dt = platform->dt();
+
+        if (platform->key(engine::platform::KeyId::KEY_E).state()== engine::platform::Key::State::JustPressed&& m_eventStage == 0) {
+            m_eventStage = 1;
+            m_eventTimer = 0.0f;
+        }
+        if (m_eventStage == 1) {
+            m_eventTimer += dt;
+            if (m_eventTimer >= 2.0f) {
+                m_sunScale = 0.10f;
+                m_pointLightDiffuse =glm::vec3(1.0f, 0.0f, 0.0f);
+                m_eventStage = 2;
+                m_eventTimer = 0.0f;
+            }
+        }
+        if (m_eventStage == 2) {
+            m_eventTimer += dt;
+            if (m_eventTimer >= 5.0f) {
+                m_bigBang = true;
+                m_eventStage = 3;
+            }
+        }
         update_camera();
     }
 
@@ -186,7 +209,9 @@ namespace app {
     }
 
     void MainController::draw() {
-        draw_sun();
+        if (!m_bigBang) {
+            draw_sun();
+        }
         draw_skybox();
     }
 
