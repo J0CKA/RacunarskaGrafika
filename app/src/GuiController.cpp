@@ -1,7 +1,7 @@
 #include <GuiController.hpp>
 
-#include "../../engine/include/engine/core/Controller.hpp"
-#include "../../engine/include/engine/graphics/GraphicsController.hpp"
+#include <engine/core/Controller.hpp>
+#include <engine/graphics/GraphicsController.hpp>
 #include "engine/platform/PlatformController.hpp"
 #include "imgui.h"
 

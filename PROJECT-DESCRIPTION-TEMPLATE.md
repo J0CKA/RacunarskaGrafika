@@ -22,7 +22,7 @@ Mouse -> rotacija kamere
 
 [x] Model with lighting
 [x] Two types of lighting with customizable colors and movement through GUI or ACTIONS
-[x] E --- AFTER_2_SECONDS---Triggers---> promena boje Point svetla ---> AFTER_2_SECONDS---Triggers---> pomeranje Sunca
+[x] E --- AFTER_2_SECONDS---Triggers---> promena boje Point svetla  ---> AFTER_5_SECONDS---Triggers---> sve nestaje
 
 ### Group A:
 

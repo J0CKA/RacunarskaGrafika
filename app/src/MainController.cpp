@@ -1,6 +1,5 @@
 #include <MainController.hpp>
-
-#include "../../engine/libs/spdlog/include/spdlog/spdlog.h"
+#include <spdlog/spdlog.h>
 #include "GuiController.hpp"
 
 #include <engine/core/Engine.hpp>
@@ -54,15 +53,15 @@ namespace app {
 
         shader->set_vec3("viewPos", graphics->camera()->Position);
 
-        shader->set_vec3("dirLight.direction",m_directionalLightDirection);
-        shader->set_vec3("dirLight.ambient",m_directionalLightAmbient);
-        shader->set_vec3("dirLight.diffuse",m_directionalLightDiffuse);
-        shader->set_vec3("dirLight.specular",m_directionalLightSpecular);
+        shader->set_vec3("dirLight.direction",m_directional_light_direction);
+        shader->set_vec3("dirLight.ambient",m_directional_light_ambient);
+        shader->set_vec3("dirLight.diffuse",m_directional_light_diffuse);
+        shader->set_vec3("dirLight.specular",m_directional_light_specular);
 
-        shader->set_vec3("pointLight.position",m_pointLightPos);
-        shader->set_vec3("pointLight.ambient",m_pointLightAmbient);
-        shader->set_vec3("pointLight.diffuse",m_pointLightDiffuse);
-        shader->set_vec3("pointLight.specular",m_pointLightSpecular);
+        shader->set_vec3("pointLight.position",m_point_light_pos);
+        shader->set_vec3("pointLight.ambient",m_point_light_ambient);
+        shader->set_vec3("pointLight.diffuse",m_point_light_diffuse);
+        shader->set_vec3("pointLight.specular",m_point_light_specular);
 
         shader->set_float("pointLight.constant",1.0f);
         shader->set_float("pointLight.linear",0.09f);
@@ -72,7 +71,7 @@ namespace app {
         engine::resources::Model* sun = resources->model("sun");
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-3.2f, 0.0f, -5.0f));
-        model = glm::scale(model, glm::vec3(m_sunScale));
+        model = glm::scale(model, glm::vec3(m_sun_scale));
         shader->set_mat4("model", model);
         sun->draw(shader);
 
@@ -173,24 +172,24 @@ namespace app {
         auto platform =engine::core::Controller::get<engine::platform::PlatformController>();
         float dt = platform->dt();
 
-        if (platform->key(engine::platform::KeyId::KEY_E).state()== engine::platform::Key::State::JustPressed&& m_eventStage == 0) {
-            m_eventStage = 1;
-            m_eventTimer = 0.0f;
+        if (platform->key(engine::platform::KeyId::KEY_E).state()== engine::platform::Key::State::JustPressed&& m_event_stage == 0) {
+            m_event_stage = 1;
+            m_event_timer = 0.0f;
         }
-        if (m_eventStage == 1) {
-            m_eventTimer += dt;
-            if (m_eventTimer >= 2.0f) {
-                m_sunScale = 0.10f;
-                m_pointLightDiffuse =glm::vec3(1.0f, 0.0f, 0.0f);
-                m_eventStage = 2;
-                m_eventTimer = 0.0f;
+        if (m_event_stage == 1) {
+            m_event_timer += dt;
+            if (m_event_timer >= 2.0f) {
+                m_sun_scale = 0.10f;
+                m_point_light_diffuse =glm::vec3(1.0f, 0.0f, 0.0f);
+                m_event_stage = 2;
+                m_event_timer = 0.0f;
             }
         }
-        if (m_eventStage == 2) {
-            m_eventTimer += dt;
-            if (m_eventTimer >= 5.0f) {
-                m_bigBang = true;
-                m_eventStage = 3;
+        if (m_event_stage == 2) {
+            m_event_timer += dt;
+            if (m_event_timer >= 5.0f) {
+                m_big_bang = true;
+                m_event_stage = 3;
             }
         }
         update_camera();
@@ -209,7 +208,7 @@ namespace app {
     }
 
     void MainController::draw() {
-        if (!m_bigBang) {
+        if (!m_big_bang) {
             draw_sun();
         }
         draw_skybox();
