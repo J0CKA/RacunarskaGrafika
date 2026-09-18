@@ -52,11 +52,27 @@ namespace app {
         shader->set_mat4("projection",graphics->projection_matrix());
         shader->set_mat4("view",graphics->camera()->view_matrix());
 
+        shader->set_vec3("viewPos", graphics->camera()->Position);
+
+        shader->set_vec3("dirLight.direction",m_directionalLightDirection);
+        shader->set_vec3("dirLight.ambient",m_directionalLightAmbient);
+        shader->set_vec3("dirLight.diffuse",m_directionalLightDiffuse);
+        shader->set_vec3("dirLight.specular",m_directionalLightSpecular);
+
+        shader->set_vec3("pointLight.position",m_pointLightPos);
+        shader->set_vec3("pointLight.ambient",m_pointLightAmbient);
+        shader->set_vec3("pointLight.diffuse",m_pointLightDiffuse);
+        shader->set_vec3("pointLight.specular",m_pointLightSpecular);
+
+        shader->set_float("pointLight.constant",1.0f);
+        shader->set_float("pointLight.linear",0.09f);
+        shader->set_float("pointLight.quadratic",0.032f);
+
         //sunce
         engine::resources::Model* sun = resources->model("sun");
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(-3.2f, 0.0f, -5.0f));
-        model = glm::scale(model, glm::vec3(0.08f));
+        model = glm::scale(model, glm::vec3(m_sunScale));
         shader->set_mat4("model", model);
         sun->draw(shader);
 
@@ -153,7 +169,7 @@ namespace app {
 
     }
 
-    void MainController::update() {
+    void MainController::update(){
         update_camera();
     }
 
