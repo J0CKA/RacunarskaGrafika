@@ -53,19 +53,19 @@ namespace app {
 
         shader->set_vec3("viewPos", graphics->camera()->Position);
 
-        shader->set_vec3("dirLight.direction",m_directional_light_direction);
-        shader->set_vec3("dirLight.ambient",m_directional_light_ambient);
-        shader->set_vec3("dirLight.diffuse",m_directional_light_diffuse);
-        shader->set_vec3("dirLight.specular",m_directional_light_specular);
+        shader->set_vec3("dirLight.direction", m_directional_light.direction);
+        shader->set_vec3("dirLight.ambient", m_directional_light.ambient);
+        shader->set_vec3("dirLight.diffuse", m_directional_light.diffuse);
+        shader->set_vec3("dirLight.specular", m_directional_light.specular);
 
-        shader->set_vec3("pointLight.position",m_point_light_pos);
-        shader->set_vec3("pointLight.ambient",m_point_light_ambient);
-        shader->set_vec3("pointLight.diffuse",m_point_light_diffuse);
-        shader->set_vec3("pointLight.specular",m_point_light_specular);
+        shader->set_vec3("pointLight.position", m_point_light.position);
+        shader->set_vec3("pointLight.ambient", m_point_light.ambient);
+        shader->set_vec3("pointLight.diffuse", m_point_light.diffuse);
+        shader->set_vec3("pointLight.specular", m_point_light.specular);
 
-        shader->set_float("pointLight.constant",1.0f);
-        shader->set_float("pointLight.linear",0.09f);
-        shader->set_float("pointLight.quadratic",0.032f);
+        shader->set_float("pointLight.constant", m_point_light.constant);
+        shader->set_float("pointLight.linear", m_point_light.linear);
+        shader->set_float("pointLight.quadratic", m_point_light.quadratic);
 
         //sunce
         engine::resources::Model* sun = resources->model("sun");
@@ -180,7 +180,7 @@ namespace app {
             m_event_timer += dt;
             if (m_event_timer >= 2.0f) {
                 m_sun_scale = 0.10f;
-                m_point_light_diffuse =glm::vec3(1.0f, 0.0f, 0.0f);
+                m_point_light.diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
                 m_event_stage = 2;
                 m_event_timer = 0.0f;
             }
